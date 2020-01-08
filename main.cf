@@ -1,0 +1,55 @@
+"""
+    :copyright: 2020 Inmanta
+    :contact: code@inmanta.com
+    :license: Inmanta EULA
+"""
+
+import lsm
+import lsm::fsm
+import vyos
+import net
+
+entity VlanAssignment extends lsm::ServiceEntity:
+    std::ipv_any_address router_ip
+    string router_ip__description="The IP address of the vyos router that should be configured."
+
+    string interface_name
+    string interface_name__description="The name of the interface that should be connected on the given VLAN."
+
+    std::ipv_any_interface address
+    string address__description="The IP-address/netmask to assign to the given VLAN interface."
+    lsm::attribute_modifier address__modifier="rw+"
+
+    net::vlan_id vlan_id
+    string vlan_id__description="The VLAN ID to assign to the given interface."
+    lsm::attribute_modifier vlan_id__modifier="rw+"
+end
+
+index VlanAssignment(router_ip, interface_name, vlan_id)
+
+implement VlanAssignment using vlanAssignment
+implement VlanAssignment using parents
+
+implementation vlanAssignment for VlanAssignment:
+    host = vyos::Host(name="vyos", user="vyos", password="vyos", port=22, ip=self.router_ip)
+    interface = vyos::Interface(name=self.interface_name, host=host)
+    v_interface = vyos::Vif(vlan=self.vlan_id, address=self.address, dhcp=false, parent=interface, purge_on_delete=false)
+    self.resources = [interface.config]
+end
+
+binding = lsm::ServiceEntityBinding(
+    service_entity="__config__::VlanAssignment",
+    lifecycle=lsm::fsm::simple,
+    service_entity_name="vlan-assignment",
+)
+
+for assignment in lsm::all(binding):
+    VlanAssignment(
+        instance_id=assignment["id"],
+        router_ip=assignment["attributes"]["router_ip"],
+        interface_name=assignment["attributes"]["interface_name"],
+        address=assignment["attributes"]["address"],
+        vlan_id=assignment["attributes"]["vlan_id"],
+        entity_binding=binding,
+    )
+end
