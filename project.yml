@@ -8,5 +8,5 @@ modulepath: libs
 downloadpath: libs
 repo:
   - git@github.com:inmanta/{}.git
-install_mode: master
+install_mode: release
 requires:
