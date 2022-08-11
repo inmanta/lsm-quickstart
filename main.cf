@@ -39,8 +39,8 @@ end
 
 
 entity Wrapper extends lsm::ServiceEntity:
-	int value = 0
-	lsm::attribute_modifier value__modifier = "rw+"
+    int value = 0
+    lsm::attribute_modifier value__modifier = "rw+"
 end
 
 
@@ -73,14 +73,14 @@ end
 
 
 implementation wrapper for Wrapper:
-	self.resources += self.vlan.resources
+    self.resources += self.vlan.resources
 end
 
 
 implementation multi_wrapper for MultiWrapper:
-	for vlan in self.vlan:
-		self.resources += vlan.resources
-	end
+    for vlan in self.vlan:
+        self.resources += vlan.resources
+    end
 end
 
 
@@ -92,10 +92,10 @@ wrapper_binding = lsm::ServiceEntityBinding(
 
 for assignment in lsm::all(wrapper_binding):
     Wrapper(
-	entity_binding=wrapper_binding,
+        entity_binding=wrapper_binding,
         instance_id=assignment["id"],
-	vlan=VlanAssignment[instance_id=assignment["attributes"]["vlan"]],
-	value="value" in assignment["attributes"] ? assignment["attributes"]["value"] : 0,
+        vlan=VlanAssignment[instance_id=assignment["attributes"]["vlan"]],
+        value=assignment["attributes"]["value"],
     )
 end
 
@@ -106,16 +106,22 @@ multi_wrapper_binding = lsm::ServiceEntityBinding(
     service_entity_name="multi-wrapper",
 )
 
-#for assignment in lsm::all(multi_wrapper_binding):
-#    MultiWrapper(
-#       entity_binding=wrapper_binding,
-#       instance_id=assignment["id"],
-#	vlan=VlanAssignment[instance_id=assignment["attributes"]["vlan"]]
-#    )
-#end
+for assignment in lsm::all(multi_wrapper_binding):
+    wrapper = MultiWrapper(
+        entity_binding=wrapper_binding,
+        instance_id=assignment["id"],
+    )
+    for vlan in assignment["attributes"]["vlan"]:
+        wrapper.vlan = VlanAssignment[instance_id=vlan]
+    end
+end
+
 
 index lsm::ServiceEntity(instance_id)
 
 
 implement Wrapper using parents, wrapper
 implement MultiWrapper using parents, multi_wrapper
+
+
+# vim: set tabstop=4 shiftwidth=4 expandtab:
