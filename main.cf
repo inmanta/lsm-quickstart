@@ -107,7 +107,7 @@ end
 multi_wrapper_binding = lsm::ServiceEntityBinding(
     service_entity="__config__::MultiWrapper",
     lifecycle=lsm::fsm::simple,
-    service_entity_name="multi-wrapper2",
+    service_entity_name="multi-wrapper",
 )
 
 for assignment in lsm::all(multi_wrapper_binding):
