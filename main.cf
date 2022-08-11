@@ -9,6 +9,10 @@ import lsm::fsm
 import vyos
 import net
 
+
+index lsm::ServiceEntity(instance_id)
+
+
 entity VlanAssignment extends lsm::ServiceEntity:
     std::ipv_any_address router_ip
     string router_ip__description="The IP address of the vyos router that should be configured."
@@ -43,15 +47,27 @@ entity Wrapper extends lsm::ServiceEntity:
     lsm::attribute_modifier value__modifier = "rw+"
 end
 
+Wrapper.vlan [1] lsm::__service__, lsm::__rwplus__ VlanAssignment
 
-Wrapper.vlan [1] lsm::__service__ VlanAssignment
+implement Wrapper using parents, wrapper
+
+implementation wrapper for Wrapper:
+    self.resources += self.vlan.resources
+end
 
 
 entity MultiWrapper extends lsm::ServiceEntity:
 end
 
-
 MultiWrapper.vlan [0:] lsm::__service__, lsm::__rwplus__ VlanAssignment
+
+implement MultiWrapper using parents, multi_wrapper
+
+implementation multi_wrapper for MultiWrapper:
+    for vlan in self.vlan:
+        self.resources += vlan.resources
+    end
+end
 
 
 binding = lsm::ServiceEntityBinding(
@@ -69,18 +85,6 @@ for assignment in lsm::all(binding):
         vlan_id=assignment["attributes"]["vlan_id"],
         entity_binding=binding,
     )
-end
-
-
-implementation wrapper for Wrapper:
-    self.resources += self.vlan.resources
-end
-
-
-implementation multi_wrapper for MultiWrapper:
-    for vlan in self.vlan:
-        self.resources += vlan.resources
-    end
 end
 
 
@@ -103,7 +107,7 @@ end
 multi_wrapper_binding = lsm::ServiceEntityBinding(
     service_entity="__config__::MultiWrapper",
     lifecycle=lsm::fsm::simple,
-    service_entity_name="multi-wrapper",
+    service_entity_name="multi-wrapper2",
 )
 
 for assignment in lsm::all(multi_wrapper_binding):
@@ -112,16 +116,9 @@ for assignment in lsm::all(multi_wrapper_binding):
         instance_id=assignment["id"],
     )
     for vlan in assignment["attributes"]["vlan"]:
-        wrapper.vlan = VlanAssignment[instance_id=vlan]
+        wrapper.vlan += VlanAssignment[instance_id=vlan]
     end
 end
-
-
-index lsm::ServiceEntity(instance_id)
-
-
-implement Wrapper using parents, wrapper
-implement MultiWrapper using parents, multi_wrapper
 
 
 # vim: set tabstop=4 shiftwidth=4 expandtab:
