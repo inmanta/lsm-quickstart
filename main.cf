@@ -31,9 +31,27 @@ implement VlanAssignment using vlanAssignment
 implement VlanAssignment using parents
 
 implementation vlanAssignment for VlanAssignment:
-    host = vyos::Host(name="vyos", user="vyos", password="vyos", port=22, ip=self.router_ip)
-    interface = vyos::Interface(name=self.interface_name, host=host)
-    v_interface = vyos::Vif(vlan=self.vlan_id, address=self.address, dhcp=false, parent=interface, purge_on_delete=false)
+    host = vyos::Host(
+        name="vyos",
+        user="vyos",
+        password="vyos",
+        port=22,
+        ip=self.router_ip,
+        purged=self.purge_resources,
+    )
+    interface = vyos::Interface(
+        name=self.interface_name,
+        host=host,
+        purged=self.purge_resources,
+    )
+    v_interface = vyos::Vif(
+        vlan=self.vlan_id,
+        address=self.address,
+        dhcp=false,
+        parent=interface,
+        purge_on_delete=false,
+        purged=self.purge_resources,
+    )
     self.resources = [interface.config]
 end
 
@@ -51,6 +69,5 @@ for assignment in lsm::all(binding):
         address=assignment["attributes"]["address"],
         vlan_id=assignment["attributes"]["vlan_id"],
         entity_binding=binding,
-        purged=self.purge_resources
     )
 end
