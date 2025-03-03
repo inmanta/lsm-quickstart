@@ -51,5 +51,6 @@ for assignment in lsm::all(binding):
         address=assignment["attributes"]["address"],
         vlan_id=assignment["attributes"]["vlan_id"],
         entity_binding=binding,
+        purged=self.purge_resources
     )
 end
