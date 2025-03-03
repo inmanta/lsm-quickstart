@@ -37,12 +37,10 @@ implementation vlanAssignment for VlanAssignment:
         password="vyos",
         port=22,
         ip=self.router_ip,
-        purged=self.purge_resources,
     )
     interface = vyos::Interface(
         name=self.interface_name,
         host=host,
-        purged=self.purge_resources,
     )
     v_interface = vyos::Vif(
         vlan=self.vlan_id,
