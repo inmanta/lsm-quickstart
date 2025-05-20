@@ -1,4 +1,0 @@
-# Pin setuptools because of a breaking change in the library that will only be
-# handled in next iso release
-setuptools<71
-
